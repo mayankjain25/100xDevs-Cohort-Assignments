@@ -43,7 +43,85 @@
   const bodyParser = require('body-parser');
   
   const app = express();
+
+  let todos = []
   
   app.use(bodyParser.json());
+
+  // app.listen(3000, ()=>{console.log('listening on port 3000')})
+
+  app.get("/todos", (req, res)=>{
+    res.status(200).json(todos)
+  })
   
+  app.get("/todos/:id", (req,res)=>{
+    let todoItem = todos.filter((todo)=> todo.id == req.params.id)
+
+    todoItem.length > 0 ? res.status(200).json(todoItem) : res.status(404).send("404 Not Found")
+
+    // res.status(200).send("Todo updated successfully")
+  })
+
+  app.post("/todos", (req,res)=>{
+
+    let uniqueID = getUniqueId()
+
+    const {title, completed, description} = req.body
+    console.log(title, completed, description)
+
+    
+    const todoItem = {
+      id: uniqueID,
+      title: title,
+      completed: completed,
+      description: description
+    }
+    
+    todos.push(todoItem)
+    res.status(201).json({"id": uniqueID})
+
+  })
+
+  app.put("/todos/:id", (req,res)=>{
+    let todoItem = todos.filter((todo)=> todo.id == req.params.id)
+
+    const {title, completed, description} = req.body
+
+    if(todoItem.length > 0)
+    {
+      todos.map((todo)=>{
+        if(todo.id == req.params.id)
+        {
+          todo.title = title
+          todo.completed = completed
+          todo.description = description
+        }
+      })
+
+      res.status(200).json(todoItem)
+
+    }
+    else res.status(404).send("404 Not Found")
+
+    // res.status(200).json(todoItem)
+  })
+
+app.delete("/todos/:id", (req, res)=>{
+  const todoID = req.params.id
+
+  let beforeTodosLength = todos.length
+  todos = todos.filter((todo)=> todo.id!= todoID)
+
+  if(todos.length == beforeTodosLength) res.status(404).send("404 Not Found")
+  else res.status(200).json(todos)
+})
+
+  app.all('*', (req, res) => {
+    res.status(404).send('Route not found');
+  });
+
   module.exports = app;
+
+  function getUniqueId(){
+    return Math.floor((Math.random() * 100000) + 1)
+  }
